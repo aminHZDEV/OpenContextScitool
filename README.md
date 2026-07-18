@@ -16,6 +16,53 @@ On Debian/Ubuntu, plain `pip install` into system Python fails with PEP 668 (`ex
 
 Indexing and search need only PyYAML; the `[server]` extra pulls the MCP SDK's tree (~28 packages). Skip it if you only want the CLI.
 
+## Quickstart
+
+### Try it in 30 seconds — no ingestion, no API key
+
+The repo ships a sample bundle, so you can see it work before pointing it at your own docs:
+
+```bash
+pipx install 'okf-ctx[server]'
+git clone https://github.com/aminHZDEV/OpenContextScitool && cd OpenContextScitool
+okf index  --bundle examples/bundle --db /tmp/demo.db
+okf search --db /tmp/demo.db how long is a token valid
+```
+
+You get the *conflict caveat* back — the docs disagree on the token TTL, and the tool tells you so. See [Example](#example) for the output.
+
+### Use it on your own project
+
+1. **Install and scaffold.** From your project root:
+   ```bash
+   pipx install 'okf-ctx[server]'
+   okf init                      # detects ./docs, writes the MCP config + skills/agents
+   ```
+   For a non-Claude client: `okf init --client cursor|codex|gemini`.
+
+2. **Build the bundle from your docs** — the one step that uses the model:
+   ```bash
+   # Claude Code:      /okf-ingest
+   # any other agent:  okf prompt   > then paste the output into your agent
+   okf index                     # turn the concept files into the search index
+   ```
+
+3. **Restart your agent** so it loads the MCP server. It now has four tools: `search`, `read`, `links`, `report`.
+
+4. **Ask it questions.** It searches the bundle instead of paging whole documents into context.
+
+5. **Maintain it** once real usage has accumulated — this is the half that pays off:
+   ```bash
+   okf report                    # what's failing: gaps, oversold docs, contradictions
+   # Claude Code:      /okf-curator
+   # any other agent:  okf prompt --curate
+   okf dashboard                 # optional: the same report as a browser page
+   ```
+
+The whole loop is **ingest → index → serve → report → curate.** Below `okf init` and each command has its own section.
+
+> **Should you use this at all?** Below ~30 documents, `grep` beats it — see [When not to use this](#when-not-to-use-this). It earns its place on large, changing prose corpora that get queried repeatedly.
+
 ## Use
 
 ```bash
@@ -57,6 +104,42 @@ Then the lifecycle is two halves, **create** and **maintain**:
 **The library makes no LLM calls of its own.** The model is already on the other end of the MCP connection`okf ingest` drives your local `claude`, and `okf prompt` / `okf prompt --curate` just print instructions for any agent to run. No second API client, no API key.
 
 The **maintain** half is the point: `okf report` (and the `report` MCP tool) reads the usage log and names each bad conceptoversold descriptions, missing aliases, gaps, unmarked contradictionsand the curator fixes the markdown, then re-indexes. See [Telemetry](#telemetry).
+
+## Example
+
+A hand-written sample bundle lives in [`examples/bundle/`](examples/bundle/) — a fictional auth service's docs, 7 concepts, no ingestion required. It's the fastest way to see the format and try the tool:
+
+```bash
+okf index  --bundle examples/bundle --db /tmp/demo.db
+okf search --db /tmp/demo.db how long is a token valid
+```
+
+A concept is just markdown with frontmatter — here's [`caveat-logout-does-not-revoke.md`](examples/bundle/caveat-logout-does-not-revoke.md):
+
+```markdown
+---
+type: Caveat
+title: Logout does not revoke the token
+description: 'Logout only clears the client cookie; the bearer token stays valid until it expires, so a copied token keeps working after logout'
+tags: [auth, token, logout, revocation, security, gotcha]
+aliases: [logout security, token still valid after logout, revoke token]
+source: [docs/auth.md#logout]
+confidence: high
+---
+`POST /logout` deletes the client-side cookie only. The session token itself is
+**not** added to any revocation list — it remains valid until `TOKEN_TTL` elapses…
+```
+
+And the search above returns — note that a plain-English question surfaces the **conflict caveat**, because its `aliases` carried that phrasing:
+
+```
+1. [ 4.41] Caveat  Docs disagree on the token TTL
+   caveat-token-ttl-conflict.md
+   The API reference says TOKEN_TTL is 15 minutes; the operations guide says 24 hours…
+   …token lifetime  how long is a token valid  TOKEN_TTL value…
+```
+
+The bundle deliberately includes two docs that disagree on the token TTL (`token-ttl-api.md` says 15 min, `token-ttl-ops.md` says 24 h) with a `Caveat` naming the conflict — so a reader searching the TTL learns *both* claims exist and contradict, which a lexical index can't otherwise express. That, and the honesty rules, are what this tool adds over `grep`.
 
 ## How search works
 

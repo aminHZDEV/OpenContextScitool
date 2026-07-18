@@ -71,9 +71,25 @@ Every MCP tool call writes to the index. The join between `retrieval` (what sear
 
 Honest limit: this observes retrieval, not whether the answer was right. A read means a doc was consulted, not that it helped.
 
+## Data model
+
+OKF borrows the shape of [SciTools Understand](https://www.m-zakeri.ir/OpenUnderstand/): a graph of **nodes and typed relationships**. Understand has `Entity` linked by `Reference`; OKF has `concept` linked by `edge`. The figures below use that project's presentation style, with a real slice of a bundle.
+
+![Figure 1](docs/fig1-datamodel.png)
+
+**Figure 1 — OKF data structure for a real bundle.** Blue = `concept` (the knowledge, with instance values). Green/red = `edge` (a typed relationship: `link` or `conflicts_with`). Arrows read `concept → edge → concept`, mirroring Understand's `Entity → Reference → Entity`.
+
+![Figure 2](docs/fig2-inverse.png)
+
+**Figure 2 — the same edges in the inverse direction.** `links(path, direction="in")` walks `edge.dst` backward: what points *at* a concept. This is how a reader arriving at the chat protocol learns which concepts reference and contest it — the OKF analog of Understand's inverse (`-by`) references.
+
 ## Database schema
 
 One SQLite file (default `.okf/index.db`, WAL mode). Canonical DDL is [`okf_ctx/schema.sql`](okf_ctx/schema.sql).
+
+![Figure 3](docs/fig3-erd.png)
+
+**Figure 3 — OKF database schema (core tables).** Blue = derived from the bundle (rebuilt by `okf index`). Green = telemetry (the only non-derived data). Solid arrows are enforced foreign keys; dashed are logical links via `path`, which are deliberately *not* FKs because OKF tolerates broken links. `meta`, `source_file`, and the `concept_fts` search index are omitted for clarity.
 
 **The two halves behave completely differently, and it matters:**
 

@@ -33,17 +33,30 @@ Wire the MCP server into Claude Code:
     "args": ["--bundle", "/abs/path/bundle", "--db", "/abs/path/.okf/index.db"] } } }
 ```
 
-That gives the agent three tools: `search`, `read`, `links`.
+That gives the agent four tools: `search`, `read`, `links`, and `report` (what's failing in the bundle).
 
-## Building the bundle
+## Workflow
 
-`ingest-context.md` is the instruction document for the pass that converts your docs into concepts. It is not run by this library — hand it to the agent you already have:
+The fastest start is `okf init`, which scaffolds the bundle directory, wires the MCP server into your client's config, and — for Claude Code — writes two skills/agents:
 
 ```bash
-claude "Follow ./ingest-context.md and ingest ./docs into ./bundle"
+cd your-project
+okf init                 # or: okf init --client cursor|codex|gemini|all
 ```
 
-The library deliberately makes no LLM calls. The model is already on the other end of the MCP connection; a second, separate API client would duplicate it and cost an API key.
+Then the lifecycle is two halves, **create** and **maintain**:
+
+| Step | Claude Code | Any other client |
+|---|---|---|
+| **Create** the bundle from docs | `/okf-ingest` | `okf ingest` or `okf prompt` (paste) |
+| Build the index | `okf index` | same |
+| **Maintain** it from usage data | `/okf-curator` | `okf prompt --curate` (paste) |
+
+`ingest-context.md` is the authoring instruction the create step follows; `okf init` copies it into the skill so it's self-contained.
+
+**The library makes no LLM calls of its own.** The model is already on the other end of the MCP connection — `okf ingest` drives your local `claude`, and `okf prompt` / `okf prompt --curate` just print instructions for any agent to run. No second API client, no API key.
+
+The **maintain** half is the point: `okf report` (and the `report` MCP tool) reads the usage log and names each bad concept — oversold descriptions, missing aliases, gaps, unmarked contradictions — and the curator fixes the markdown, then re-indexes. See [Telemetry](#telemetry).
 
 ## How search works
 

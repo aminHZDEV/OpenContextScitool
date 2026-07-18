@@ -384,6 +384,8 @@ def main(argv=None) -> int:
     ap.add_argument("--all", action="store_true",
                     help="ingest: re-ingest every source, not just changed ones")
     ap.add_argument("--force", action="store_true", help="init: overwrite existing skill/agent files")
+    ap.add_argument("--curate", action="store_true",
+                    help="prompt: emit the curation prompt (maintain a bundle) instead of the ingest prompt")
     ap.add_argument("--json", action="store_true", help="report: machine-readable output")
     ap.add_argument("--out", type=Path, help="dashboard: output html path")
     ap.add_argument("--no-open", action="store_true", help="dashboard: don't open a browser")
@@ -417,6 +419,11 @@ def main(argv=None) -> int:
         return run_report(a.db, as_json=a.json)
 
     if a.command == "prompt":
+        if a.curate:
+            from .ingest import build_curate_prompt
+
+            print(build_curate_prompt(a.bundle, a.db))
+            return 0
         from .ingest import build_prompt, find_docs
 
         docs = a.docs or (find_docs(Path.cwd()) or [Path.cwd()])[0]

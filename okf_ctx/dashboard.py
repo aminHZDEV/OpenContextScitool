@@ -12,7 +12,6 @@ categorical palette is introduced, so there is nothing to re-validate.
 from __future__ import annotations
 
 import html
-import json
 import webbrowser
 from pathlib import Path
 

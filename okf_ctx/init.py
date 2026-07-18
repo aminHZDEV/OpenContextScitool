@@ -81,6 +81,77 @@ Two things matter more than anything else:
 """
 
 
+# The curator is the maintenance half of okf-ingest: ingest CREATES the bundle,
+# the curator IMPROVES it using the usage telemetry `okf report` exposes. It
+# needs Bash (to run `okf report` and `okf index`), which ingest does not.
+CURATOR_SKILL_MD = """\
+---
+description: >-
+  Improve an existing OKF bundle using its usage data. Reads `okf report` to
+  find bad context -- questions with no answer, concepts offered but never read,
+  concepts read then re-searched -- and fixes the concept markdown. Use after
+  real traffic has accumulated, or when retrieval quality feels off.
+context: fork
+agent: okf-curator
+allowed-tools: Bash, Read, Glob, Grep, Write, Edit
+---
+
+Improve the OKF bundle at `${CLAUDE_PROJECT_DIR}/bundle` using its usage data.
+
+1. Run `okf report` and read every section. Each finding is a real defect.
+2. Fix each by EDITING the concept markdown -- follow the authoring rules in
+   `${CLAUDE_SKILL_DIR}/ingest-context.md`, especially the honesty rules:
+   - gap (asked, nothing found): write the missing concept ONLY if a source
+     supports it; if the docs genuinely don't answer it, note it for a human.
+   - noise (offered, never read): the description oversells. Rewrite it to
+     promise only what the concept delivers.
+   - weak (low top score): a vocabulary miss -- add the searcher's exact words
+     to `aliases`.
+   - insufficient (read, then searched again): the concept failed to answer.
+     Fix the content, or split it.
+   - unmarked conflict: two concepts make rival claims with no `conflicts_with`.
+     Add the reciprocal link on both, and a `Caveat` naming the conflict.
+3. Run `okf index` so the edits become searchable.
+4. Print a short summary: what you fixed, what you left for a human, and why.
+
+Never invent knowledge to close a gap. A gap the docs don't cover is a note for
+a human, not a concept for you to fabricate.
+"""
+
+CURATOR_AGENT_MD = """\
+---
+name: okf-curator
+description: >-
+  Maintains an existing OKF bundle by acting on its usage telemetry. Reads
+  `okf report`, then edits concept markdown to fix oversold descriptions,
+  missing aliases, incomplete concepts, and unmarked contradictions. Use to
+  improve, audit, or clean up a bundle after it has seen real traffic.
+tools: Bash, Read, Glob, Grep, Write, Edit
+model: inherit
+color: green
+---
+
+You maintain an OKF bundle -- a directory of markdown concept files retrieved by
+a keyword (BM25) search index. You do not create the bundle (that is okf-ingest);
+you improve one that exists, driven by what its usage log reveals.
+
+Your evidence is `okf report`. From real queries and reads it surfaces gaps
+(questions that returned nothing), noise (concepts search offers that nobody
+opens), weak answers (queries whose best hit barely scored), and insufficient
+concepts (opened, then followed by another search). Each is a defect with a
+specific fix, and the report names which.
+
+Two rules govern every edit:
+
+1. Fix the markdown, never the database. The index is derived; `okf index`
+   rebuilds it from the files, erasing any direct DB edit.
+
+2. Never invent to close a gap. If the source material does not answer a
+   question, that gap is a note for a human -- a fabricated concept is the one
+   thing worse than a missing one, because the reader cannot tell.
+"""
+
+
 # MCP is an open protocol, so the server is portable. Only the config file
 # differs per client -- and only Claude Code sets CLAUDE_PROJECT_DIR, so every
 # other client needs explicit paths baked in at init time.
@@ -122,6 +193,34 @@ def _codex_toml(path: Path, args: list[str]) -> str:
     with path.open("a") as f:
         f.write(block)
     return "appended okf server (verify the [mcp_servers] key for your codex version)"
+
+
+def _write_skill(root: Path, name: str, body: str, docs: Path, force: bool) -> str:
+    from .ingest import SKIP_DIRS
+
+    d = root / ".claude" / "skills" / name
+    d.mkdir(parents=True, exist_ok=True)
+    f = d / "SKILL.md"
+    if f.exists() and not force:
+        return "exists (--force to overwrite)"
+    # Not .format(): the body has literal ${CLAUDE_SKILL_DIR} that Claude Code
+    # expands; .format() would try to read the braces as fields.
+    f.write_text(body.replace("@@DOCS@@", str(docs))
+                     .replace("@@SKIPS@@", ", ".join(sorted(SKIP_DIRS)[:6]) + ", ..."))
+    # Copy the context doc in so the skill is self-contained and committable --
+    # both skills reference it, so both dirs get a copy.
+    shutil.copy(CONTEXT_SRC, d / "ingest-context.md")
+    return "written"
+
+
+def _write_agent(root: Path, name: str, body: str, force: bool) -> str:
+    d = root / ".claude" / "agents"
+    d.mkdir(parents=True, exist_ok=True)
+    f = d / f"{name}.md"
+    if f.exists() and not force:
+        return "exists (--force to overwrite)"
+    f.write_text(body)
+    return "written"
 
 
 def _append_gitignore(path: Path, entry: str) -> str:
@@ -174,39 +273,21 @@ def init(root: Path, docs: Path | None = None, force: bool = False,
         print(f"  {CLIENTS[c]:<24} {status}")
 
     if "claude" not in targets:
-        print("\n  (skills/agents are Claude Code-specific -- skipped)")
+        print("\n  (skills/agents are Claude Code-specific -- skipped; the MCP\n"
+              "   tools and pasteable prompts below work in any client)")
         print("\nNext:")
         print(f"  1. okf ingest --docs {docs} --bundle {root / 'bundle'}")
         print("     ...or `okf prompt` and paste it into your agent.")
         print("  2. okf index")
+        print("  Later, to maintain the bundle from usage data:")
+        print("     okf prompt --curate    # paste into your agent")
         return 0
 
-    skill_dir = root / ".claude" / "skills" / "okf-ingest"
-    skill_dir.mkdir(parents=True, exist_ok=True)
-    skill_md = skill_dir / "SKILL.md"
-    if skill_md.exists() and not force:
-        print("  .claude/skills/okf-ingest  exists (use --force to overwrite)")
-    else:
-        # Not .format(): the body contains literal ${CLAUDE_SKILL_DIR}
-        # substitutions that Claude Code expands, and .format() would try to
-        # interpret those braces as fields.
-        skill_md.write_text(
-            SKILL_MD.replace("@@DOCS@@", str(docs))
-                    .replace("@@SKIPS@@", ", ".join(sorted(SKIP_DIRS)[:6]) + ", ...")
-        )
-        # Copy the context doc in so the skill is self-contained and committable
-        # -- it must not depend on where the wheel happens to be installed.
-        shutil.copy(CONTEXT_SRC, skill_dir / "ingest-context.md")
-        print("  .claude/skills/okf-ingest  written  (/okf-ingest)")
-
-    agents_dir = root / ".claude" / "agents"
-    agents_dir.mkdir(parents=True, exist_ok=True)
-    agent_md = agents_dir / "okf-ingest.md"
-    if agent_md.exists() and not force:
-        print("  .claude/agents/okf-ingest.md  exists (use --force to overwrite)")
-    else:
-        agent_md.write_text(AGENT_MD)
-        print("  .claude/agents/okf-ingest.md  written")
+    # Two halves: okf-ingest creates the bundle, okf-curator maintains it.
+    print("  .claude/skills/okf-ingest   " + _write_skill(root, "okf-ingest", SKILL_MD, docs, force) + "  (/okf-ingest)")
+    print("  .claude/skills/okf-curator  " + _write_skill(root, "okf-curator", CURATOR_SKILL_MD, docs, force) + "  (/okf-curator)")
+    print("  .claude/agents/okf-ingest   " + _write_agent(root, "okf-ingest", AGENT_MD, force))
+    print("  .claude/agents/okf-curator  " + _write_agent(root, "okf-curator", CURATOR_AGENT_MD, force))
 
     print("\nNext:")
     print("  1. In Claude Code, run:  /okf-ingest      (or: okf ingest)")

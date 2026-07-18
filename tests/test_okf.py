@@ -176,6 +176,15 @@ def test_triage_detects_new_and_unchanged(tmp_path):
     assert len(t3["changed"]) == 1 and len(t3["unchanged"]) == 1
 
 
+def test_curate_prompt_is_agent_agnostic(tmp_path):
+    """okf prompt --curate must emit runnable CLI steps for any client, and
+    must carry the never-invent honesty rule."""
+    p = ingest.build_curate_prompt(tmp_path / "bundle", tmp_path / "i.db")
+    assert "okf report" in p and "okf index" in p
+    assert "never invent" in p.lower()
+    assert "${" not in p  # no Claude-Code-only substitutions leaked in
+
+
 def test_vendored_dirs_skipped(tmp_path):
     docs = tmp_path / "docs"
     (docs / ".venv" / "lib").mkdir(parents=True)

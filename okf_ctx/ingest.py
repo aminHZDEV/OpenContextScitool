@@ -153,6 +153,45 @@ def record_sources(files: list[Path], db: Path) -> None:
     conn.close()
 
 
+CURATE_PROMPT = """\
+Improve the OKF bundle at {bundle} using its usage data.
+
+1. Run this and read every section -- each finding is a real defect:
+     okf report --db {db}
+
+2. Fix each finding by EDITING the concept markdown under {bundle}. Follow OKF
+   authoring rules; above all, never invent -- if the docs don't answer a
+   question, note it for a human rather than fabricating a concept.
+   - gap (asked, nothing found): write the missing concept only if a source
+     supports it; otherwise leave a note.
+   - noise (offered, never read): the description oversells -- rewrite it to
+     promise only what the concept delivers.
+   - weak (low top score): a vocabulary miss -- add the searcher's exact words
+     to the concept's `aliases`.
+   - insufficient (read, then searched again): the concept failed to answer --
+     fix the content or split it.
+   - unmarked conflict: two concepts make rival claims with no `conflicts_with`
+     -- add the reciprocal link on both and a `Caveat` naming the conflict.
+
+3. Edit the MARKDOWN, never the database -- the index is derived and `okf index`
+   rebuilds it from the files, erasing any direct DB edit.
+
+4. Re-index so the edits become searchable:
+     okf index --bundle {bundle} --db {db}
+
+5. Print a short summary: what you fixed, what you left for a human, and why.
+"""
+
+
+def build_curate_prompt(bundle: Path, db: Path) -> str:
+    """The curation workflow as agent-agnostic paste text.
+
+    okf-curator is a Claude Code skill/agent; this is the portable equivalent
+    for Cursor, Codex, Gemini, or any agent that can run the CLI and edit files.
+    """
+    return CURATE_PROMPT.format(bundle=bundle.resolve(), db=db)
+
+
 def build_prompt(docs: Path, bundle: Path) -> str:
     """The ingestion prompt, agent-agnostic.
 

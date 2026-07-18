@@ -2,7 +2,7 @@
 
 A context handler for LLMs over an [Open Knowledge Format](https://okf.md) bundle.
 
-Your docs stay as markdown in git — the source of truth. This builds a **derived, disposable** index over them, serves them to an agent through MCP, and logs every retrieval so you can see which docs get used, which get ignored, and which questions have no answer.
+Your docs stay as markdown in gitthe source of truth. This builds a **derived, disposable** index over them, serves them to an agent through MCP, and logs every retrieval so you can see which docs get used, which get ignored, and which questions have no answer.
 
 No API key. No embeddings. No network.
 
@@ -12,7 +12,7 @@ No API key. No embeddings. No network.
 pipx install 'okf-ctx[server]'        # recommended; `apt install pipx` first on Debian/Ubuntu
 ```
 
-On Debian/Ubuntu, plain `pip install` into system Python fails with PEP 668 (`externally-managed-environment`). That's correct — use `pipx`, `uv tool install`, or a venv. Don't pass `--break-system-packages`.
+On Debian/Ubuntu, plain `pip install` into system Python fails with PEP 668 (`externally-managed-environment`). That's correctuse `pipx`, `uv tool install`, or a venv. Don't pass `--break-system-packages`.
 
 Indexing and search need only PyYAML; the `[server]` extra pulls the MCP SDK's tree (~28 packages). Skip it if you only want the CLI.
 
@@ -37,7 +37,7 @@ That gives the agent four tools: `search`, `read`, `links`, and `report` (what's
 
 ## Workflow
 
-The fastest start is `okf init`, which scaffolds the bundle directory, wires the MCP server into your client's config, and — for Claude Code — writes two skills/agents:
+The fastest start is `okf init`, which scaffolds the bundle directory, wires the MCP server into your client's config, andfor Claude Codewrites two skills/agents:
 
 ```bash
 cd your-project
@@ -54,13 +54,13 @@ Then the lifecycle is two halves, **create** and **maintain**:
 
 `ingest-context.md` is the authoring instruction the create step follows; `okf init` copies it into the skill so it's self-contained.
 
-**The library makes no LLM calls of its own.** The model is already on the other end of the MCP connection — `okf ingest` drives your local `claude`, and `okf prompt` / `okf prompt --curate` just print instructions for any agent to run. No second API client, no API key.
+**The library makes no LLM calls of its own.** The model is already on the other end of the MCP connection`okf ingest` drives your local `claude`, and `okf prompt` / `okf prompt --curate` just print instructions for any agent to run. No second API client, no API key.
 
-The **maintain** half is the point: `okf report` (and the `report` MCP tool) reads the usage log and names each bad concept — oversold descriptions, missing aliases, gaps, unmarked contradictions — and the curator fixes the markdown, then re-indexes. See [Telemetry](#telemetry).
+The **maintain** half is the point: `okf report` (and the `report` MCP tool) reads the usage log and names each bad conceptoversold descriptions, missing aliases, gaps, unmarked contradictionsand the curator fixes the markdown, then re-indexes. See [Telemetry](#telemetry).
 
 ## How search works
 
-Keyword (BM25), **not semantic**. A concept is found only if the searcher's words are literally in its indexed text — nothing infers that "churn" and "attrition" are related. That is why `description`, `tags`, and `aliases` are the retrieval layer, and why `ingest-context.md` spends most of its length on how to write them.
+Keyword (BM25), **not semantic**. A concept is found only if the searcher's words are literally in its indexed text  nothing infers that "churn" and "attrition" are related. That is why `description`, `tags`, and `aliases` are the retrieval layer, and why `ingest-context.md` spends most of its length on how to write them.
 
 The tradeoff is deliberate: a bad alias is a line of YAML you can read and fix. A bad embedding is a number you can't.
 
@@ -72,7 +72,7 @@ Below roughly 30 documents, `grep` is genuinely better and you should not instal
 
 ## Telemetry
 
-Every MCP tool call writes to the index. The join between `retrieval` (what search offered) and `read` (what the model took) is the point — it distinguishes:
+Every MCP tool call writes to the index. The join between `retrieval` (what search offered) and `read` (what the model took) is the pointit distinguishes:
 
 | Symptom | Signal | Diagnosis |
 |---|---|---|
@@ -86,15 +86,15 @@ Honest limit: this observes retrieval, not whether the answer was right. A read 
 
 ## Data model
 
-OKF borrows the shape of [SciTools Understand](https://www.m-zakeri.ir/OpenUnderstand/): a graph of **nodes and typed relationships**. Understand has `Entity` linked by `Reference`; OKF has `concept` linked by `edge`. The figures below use that project's presentation style, with a real slice of a bundle.
+A graph of **nodes and typed relationships**. OKF has `concept` linked by `edge`. The figures below use that project's presentation style, with a real slice of a bundle.
 
 ![Figure 1](docs/fig1-datamodel.png)
 
-**Figure 1 — OKF data structure for a real bundle.** Blue = `concept` (the knowledge, with instance values). Green/red = `edge` (a typed relationship: `link` or `conflicts_with`). Arrows read `concept → edge → concept`, mirroring Understand's `Entity → Reference → Entity`.
+**Figure 1 OKF data structure for a real bundle.** Blue = `concept` (the knowledge, with instance values). Green/red = `edge` (a typed relationship: `link` or `conflicts_with`). Arrows read `concept → edge → concept`, mirroring Understand's `Entity → Reference → Entity`.
 
 ![Figure 2](docs/fig2-inverse.png)
 
-**Figure 2 — the same edges in the inverse direction.** `links(path, direction="in")` walks `edge.dst` backward: what points *at* a concept. This is how a reader arriving at the chat protocol learns which concepts reference and contest it — the OKF analog of Understand's inverse (`-by`) references.
+**Figure 2the same edges in the inverse direction.** `links(path, direction="in")` walks `edge.dst` backward: what points *at* a concept. This is how a reader arriving at the chat protocol learns which concepts reference and contest itthe OKF analog of Understand's inverse (`-by`) references.
 
 ## Database schema
 
@@ -102,46 +102,46 @@ One SQLite file (default `.okf/index.db`, WAL mode). Canonical DDL is [`okf_ctx/
 
 ![Figure 3](docs/fig3-erd.png)
 
-**Figure 3 — OKF database schema (core tables).** Blue = derived from the bundle (rebuilt by `okf index`). Green = telemetry (the only non-derived data). Solid arrows are enforced foreign keys; dashed are logical links via `path`, which are deliberately *not* FKs because OKF tolerates broken links. `meta`, `source_file`, and the `concept_fts` search index are omitted for clarity.
+**Figure 3OKF database schema (core tables).** Blue = derived from the bundle (rebuilt by `okf index`). Green = telemetry (the only non-derived data). Solid arrows are enforced foreign keys; dashed are logical links via `path`, which are deliberately *not* FKs because OKF tolerates broken links. `meta`, `source_file`, and the `concept_fts` search index are omitted for clarity.
 
 **The two halves behave completely differently, and it matters:**
 
 | Half | Tables | Lifecycle |
 |---|---|---|
-| **Derived** | `meta`, `concept`, `edge`, `concept_fts` | Rebuilt from the markdown. `okf index --rebuild` **deletes and regenerates** them. Never write here — your edit is erased on the next index. Edit the markdown instead. |
+| **Derived** | `meta`, `concept`, `edge`, `concept_fts` | Rebuilt from the markdown. `okf index --rebuild` **deletes and regenerates** them. Never write hereyour edit is erased on the next index. Edit the markdown instead. |
 | **History** | `session`, `query`, `retrieval`, `read` | The only non-derived data. Never touched by re-indexing. Delete the `.db` and this is gone for good. |
 
 ### Derived
 
-**`concept`** — one row per non-reserved `.md` file.
+**`concept`**one row per non-reserved `.md` file.
 
 | Column | Type | Notes |
 |---|---|---|
 | `path` | TEXT PK | bundle-relative, e.g. `auth/rotate-key.md` |
 | `type` | TEXT | one of Concept, Metric, Process, Reference, Decision, System, Caveat |
 | `title`, `description`, `confidence`, `timestamp` | TEXT | from frontmatter |
-| `tags`, `aliases`, `source` | TEXT | **newline-joined**, not JSON — they were YAML lists |
+| `tags`, `aliases`, `source` | TEXT | **newline-joined**, not JSONthey were YAML lists |
 | `body` | TEXT | markdown after the frontmatter |
-| `word_count` | INTEGER | proxy for context cost. **Not tokens** — fine for ranking, not for budgeting |
+| `word_count` | INTEGER | proxy for context cost. **Not tokens**fine for ranking, not for budgeting |
 | `content_hash` | TEXT | sha256 of the raw file; unchanged files skip re-indexing |
 | `indexed_at` | TEXT | ISO 8601 |
 
-**`edge`** — the link graph. PK `(src, dst, kind)`.
+**`edge`**the link graph. PK `(src, dst, kind)`.
 
 | Column | Notes |
 |---|---|
-| `src`, `dst` | concept paths. `dst` may not exist — OKF tolerates broken links as to-do markers |
+| `src`, `dst` | concept paths. `dst` may not existOKF tolerates broken links as to-do markers |
 | `kind` | `link` (markdown link in body) or `conflicts_with` (frontmatter; rival answers to the same question) |
 
-**`concept_fts`** — FTS5 virtual table, `porter unicode61`. **Column order is load-bearing**: `bm25()` weights are positional, and the code passes `(10, 8, 5, 3, 1)` for `title, aliases, tags, description, body`. Reorder the columns and you silently reweight search. `path` is `UNINDEXED`.
+**`concept_fts`**FTS5 virtual table, `porter unicode61`. **Column order is load-bearing**: `bm25()` weights are positional, and the code passes `(10, 8, 5, 3, 1)` for `title, aliases, tags, description, body`. Reorder the columns and you silently reweight search. `path` is `UNINDEXED`.
 
-**`meta`** — `key`/`value`. Currently one row: `bundle_path`, the absolute path the index was built from. The server refuses to start if it doesn't match the bundle it was told to serve — otherwise a stale `--db` answers this project's questions with another project's docs, silently.
+**`meta`**`key`/`value`. Currently one row: `bundle_path`, the absolute path the index was built from. The server refuses to start if it doesn't match the bundle it was told to serveotherwise a stale `--db` answers this project's questions with another project's docs, silently.
 
 ### History (telemetry)
 
-**`session`** — `id` (hex), `started_at`, `client`. One per server process; a reconnect starts a new one.
+**`session`**`id` (hex), `started_at`, `client`. One per server process; a reconnect starts a new one.
 
-**`query`** — one row per `search()`.
+**`query`**one row per `search()`.
 
 | Column | Notes |
 |---|---|
@@ -150,9 +150,9 @@ One SQLite file (default `.okf/index.db`, WAL mode). Canonical DDL is [`okf_ctx/
 | `n_results` | `0` ⇒ knowledge gap |
 | `top_score` | NULL on zero hits. Negated bm25, so **higher is better** |
 
-**`retrieval`** — what search **offered**. PK `(query_id, concept_path)`, plus `rank`, `score`.
+**`retrieval`**what search **offered**. PK `(query_id, concept_path)`, plus `rank`, `score`.
 
-**`read`** — what the model **took**. `id`, `session_id`, `ts`, `concept_path`, `query_id` (NULL = opened without searching).
+**`read`**what the model **took**. `id`, `session_id`, `ts`, `concept_path`, `query_id` (NULL = opened without searching).
 
 ### The join that matters
 

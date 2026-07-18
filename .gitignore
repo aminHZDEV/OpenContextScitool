@@ -1,0 +1,33 @@
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+.eggs/
+
+# Build artifacts — the wheel is built, never committed. Leaving egg-info
+# around also makes `pip install` skip console scripts (learned the hard way).
+build/
+dist/
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# The OKF index is DERIVED from the bundle — rebuild with `okf index`.
+# The bundle/ markdown IS committed (it's the source of truth); the db is not.
+.okf/
+
+# Benchmark scratch: generated bundle, index, dashboards. Reproducible, large.
+bench/
+
+# Local editor / OS
+.idea/
+.DS_Store
+*.swp
+
+# Claude Code local overrides (settings.local.json is per-machine; the shared
+# .mcp.json and .claude/skills|agents ARE meant to be committed).
+.claude/settings.local.json
+
+bundle-test

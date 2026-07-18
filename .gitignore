@@ -31,3 +31,4 @@ bench/
 .claude/settings.local.json
 
 bundle-test
+.claude

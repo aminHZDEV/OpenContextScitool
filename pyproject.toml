@@ -19,19 +19,20 @@ classifiers = [
     "Topic :: Software Development :: Documentation",
     "Topic :: Text Processing :: Indexing",
 ]
-
-[project.urls]
-Homepage = "https://github.com/aminHZDEV/OpenContextScitool"
-Repository = "https://github.com/aminHZDEV/OpenContextScitool"
-Issues = "https://github.com/aminHZDEV/OpenContextScitool/issues"
-
 # Core install stays tiny on purpose: indexing and search need nothing but a
 # YAML parser. The MCP server's dependency tree (pydantic, starlette, uvicorn,
 # httpx, ...) is ~28 packages, so it lives behind an extra.
 dependencies = ["pyyaml>=6.0"]
 
+# --- sub-tables must come AFTER all the flat keys above ---
+
 [project.optional-dependencies]
 server = ["mcp>=1.0"]
+
+[project.urls]
+Homepage = "https://github.com/aminHZDEV/OpenContextScitool"
+Repository = "https://github.com/aminHZDEV/OpenContextScitool"
+Issues = "https://github.com/aminHZDEV/OpenContextScitool/issues"
 
 [project.scripts]
 okf = "okf_ctx.indexer:main"

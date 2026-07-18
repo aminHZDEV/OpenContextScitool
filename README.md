@@ -90,11 +90,11 @@ A graph of **nodes and typed relationships**. OKF has `concept` linked by `edge`
 
 ![Figure 1](docs/fig1-datamodel.png)
 
-**Figure 1 OKF data structure for a real bundle.** Blue = `concept` (the knowledge, with instance values). Green/red = `edge` (a typed relationship: `link` or `conflicts_with`). Arrows read `concept → edge → concept`, mirroring Understand's `Entity → Reference → Entity`.
+**Figure 1 OKF data structure for a real bundle.** Blue = `concept` (the knowledge, with instance values). Green/red = `edge` (a typed relationship: `link` or `conflicts_with`). Arrows read `concept → edge → concept`.
 
 ![Figure 2](docs/fig2-inverse.png)
 
-**Figure 2the same edges in the inverse direction.** `links(path, direction="in")` walks `edge.dst` backward: what points *at* a concept. This is how a reader arriving at the chat protocol learns which concepts reference and contest itthe OKF analog of Understand's inverse (`-by`) references.
+**Figure 2the same edges in the inverse direction.** `links(path, direction="in")` walks `edge.dst` backward: what points *at* a concept. This is how a reader arriving at the chat protocol learns which concepts reference and contest.
 
 ## Database schema
 

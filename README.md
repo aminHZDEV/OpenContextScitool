@@ -18,7 +18,7 @@ Indexing and search need only PyYAML; the `[server]` extra pulls the MCP SDK's t
 
 ## Quickstart
 
-### Try it in 30 seconds — no ingestion, no API key
+### Try it in 30 seconds no ingestion, no API key
 
 The repo ships a sample bundle, so you can see it work before pointing it at your own docs:
 
@@ -29,7 +29,7 @@ okf index  --bundle examples/bundle --db /tmp/demo.db
 okf search --db /tmp/demo.db how long is a token valid
 ```
 
-You get the *conflict caveat* back — the docs disagree on the token TTL, and the tool tells you so. See [Example](#example) for the output.
+You get the *conflict caveat* back the docs disagree on the token TTL, and the tool tells you so. See [Example](#example) for the output.
 
 ### Use it on your own project
 
@@ -40,7 +40,7 @@ You get the *conflict caveat* back — the docs disagree on the token TTL, and t
    ```
    For a non-Claude client: `okf init --client cursor|codex|gemini`.
 
-2. **Build the bundle from your docs** — the one step that uses the model:
+2. **Build the bundle from your docs** the one step that uses the model:
    ```bash
    # Claude Code:      /okf-ingest
    # any other agent:  okf prompt   > then paste the output into your agent
@@ -51,7 +51,7 @@ You get the *conflict caveat* back — the docs disagree on the token TTL, and t
 
 4. **Ask it questions.** It searches the bundle instead of paging whole documents into context.
 
-5. **Maintain it** once real usage has accumulated — this is the half that pays off:
+5. **Maintain it** once real usage has accumulated this is the half that pays off:
    ```bash
    okf report                    # what's failing: gaps, oversold docs, contradictions
    # Claude Code:      /okf-curator
@@ -61,7 +61,7 @@ You get the *conflict caveat* back — the docs disagree on the token TTL, and t
 
 The whole loop is **ingest → index → serve → report → curate.** Below `okf init` and each command has its own section.
 
-> **Should you use this at all?** Below ~30 documents, `grep` beats it — see [When not to use this](#when-not-to-use-this). It earns its place on large, changing prose corpora that get queried repeatedly.
+> **Should you use this at all?** Below ~30 documents, `grep` beats it see [When not to use this](#when-not-to-use-this). It earns its place on large, changing prose corpora that get queried repeatedly.
 
 ## Use
 
@@ -107,14 +107,14 @@ The **maintain** half is the point: `okf report` (and the `report` MCP tool) rea
 
 ## Example
 
-A hand-written sample bundle lives in [`examples/bundle/`](examples/bundle/) — a fictional auth service's docs, 7 concepts, no ingestion required. It's the fastest way to see the format and try the tool:
+A hand-written sample bundle lives in [`examples/bundle/`](examples/bundle/) a fictional auth service's docs, 7 concepts, no ingestion required. It's the fastest way to see the format and try the tool:
 
 ```bash
 okf index  --bundle examples/bundle --db /tmp/demo.db
 okf search --db /tmp/demo.db how long is a token valid
 ```
 
-A concept is just markdown with frontmatter — here's [`caveat-logout-does-not-revoke.md`](examples/bundle/caveat-logout-does-not-revoke.md):
+A concept is just markdown with frontmatter here's [`caveat-logout-does-not-revoke.md`](examples/bundle/caveat-logout-does-not-revoke.md):
 
 ```markdown
 ---
@@ -127,10 +127,10 @@ source: [docs/auth.md#logout]
 confidence: high
 ---
 `POST /logout` deletes the client-side cookie only. The session token itself is
-**not** added to any revocation list — it remains valid until `TOKEN_TTL` elapses…
+**not** added to any revocation list it remains valid until `TOKEN_TTL` elapses…
 ```
 
-And the search above returns — note that a plain-English question surfaces the **conflict caveat**, because its `aliases` carried that phrasing:
+And the search above returns note that a plain-English question surfaces the **conflict caveat**, because its `aliases` carried that phrasing:
 
 ```
 1. [ 4.41] Caveat  Docs disagree on the token TTL
@@ -139,7 +139,7 @@ And the search above returns — note that a plain-English question surfaces the
    …token lifetime  how long is a token valid  TOKEN_TTL value…
 ```
 
-The bundle deliberately includes two docs that disagree on the token TTL (`token-ttl-api.md` says 15 min, `token-ttl-ops.md` says 24 h) with a `Caveat` naming the conflict — so a reader searching the TTL learns *both* claims exist and contradict, which a lexical index can't otherwise express. That, and the honesty rules, are what this tool adds over `grep`.
+The bundle deliberately includes two docs that disagree on the token TTL (`token-ttl-api.md` says 15 min, `token-ttl-ops.md` says 24 h) with a `Caveat` naming the conflict so a reader searching the TTL learns *both* claims exist and contradict, which a lexical index can't otherwise express. That, and the honesty rules, are what this tool adds over `grep`.
 
 ## How search works
 

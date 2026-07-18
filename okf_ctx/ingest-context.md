@@ -20,6 +20,8 @@ Then make sure those words are literally present in the frontmatter.
 
 Indexed fields, in descending weight: `title` → `aliases` → `tags` → `description` → body.
 
+**The body is not just read after retrieval — a snippet of the matching body text is returned *with the search result*.** The reader often answers from that snippet without opening the concept at all. So the body must carry substance where a query would land: state the fact plainly, near the top, in the words someone would search. A body that opens with throat-clearing ("This concept covers…") wastes the snippet, and the reader either opens the file unnecessarily or moves on.
+
 ---
 
 ## 2. Output shape
@@ -29,7 +31,7 @@ bundle/
 ├── index.md            # table of contents, no frontmatter (except okf_version at root)
 ├── log.md              # changelog, ISO dates, newest first
 ├── <concept>.md        # one file = one concept
-└── <group>/            # subfolders once a group exceeds ~15 files
+└── <group>/            # subfolders only once a directory exceeds ~25 files (see §10)
     ├── index.md
     └── <concept>.md
 ```
@@ -76,7 +78,7 @@ services/auth/keys.go.
 | `tags` | **Required** | 4–8 entries. Lowercase. **Multi-word terms are allowed and encouraged** — `market cap`, `rate limit`, `model context protocol`. Search terms, not a taxonomy. |
 | `aliases` | When applicable | Other names for the same thing: synonyms, abbreviations, expansions, the old name, what a newcomer would call it. **This is how you compensate for having no embeddings.** |
 | `timestamp` | **Required** | ISO 8601. The source's last-modified time if you know it; otherwise the ingest time. |
-| `source` | **Required** | YAML **list** of paths (+ anchor/lines). A concept derived from two sources lists both. Makes the concept auditable and re-derivable. |
+| `source` | **Required** | YAML **list** of the real source-doc paths (+ anchor/lines). List every source a concept draws from. Load-bearing: incremental re-ingestion finds which concepts to update when a source changes by matching this field — a vague or wrong path means the concept goes stale or gets duplicated on the next pass. |
 | `confidence` | **Required** | `high` / `medium` / `low`. How much you trust the **content is true**. See §8. |
 | `conflicts_with` | When applicable | YAML list of concept paths that make an **incompatible claim about the same thing**. See §8. |
 
@@ -221,7 +223,7 @@ Concepts link with relative markdown paths: `[MRR](./mrr.md)` or bundle-absolute
 
 ## 11. Reserved files
 
-**`index.md`** — **do not hand-write the concept list.** The indexer generates it from frontmatter (`title` + `description`, grouped by `type`). Hand-copying every description into the index creates a second copy of all 19 descriptions that immediately drifts from the first.
+**`index.md`** — **do not hand-write the concept list.** The indexer generates it from frontmatter (`title` + `description`, grouped by `type`). Hand-copying every description into the index creates a second copy of every description that immediately drifts from the first.
 
 You write only the parts a generator can't: the root `okf_version`, a short orientation paragraph, and any standing warning (e.g. "two rival WebSocket protocols are documented here — see [the conflict](./caveat.md)").
 
@@ -261,7 +263,7 @@ Run these as checks, not as a vibe. The YAML one especially — **actually parse
 - [ ] Every known defect, limitation, or trap is its own `Caveat`, not a body section
 - [ ] Every `description` is ≤ 30 words, no filler opener, contains the searchable nouns
 - [ ] Every abbreviation appears expanded somewhere in title/description/aliases
-- [ ] Every concept has a `source` list you could re-open
+- [ ] Every concept's `source` names the real doc(s) it came from — not paraphrased; re-ingestion matches on it
 - [ ] Anything **inferred** rather than read is `confidence: low`
 - [ ] Rival concepts point at each other with `conflicts_with`, and a `Caveat` names the conflict
 - [ ] `log.md` records what changed and why

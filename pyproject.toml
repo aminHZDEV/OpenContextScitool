@@ -11,6 +11,19 @@ requires-python = ">=3.10"
 license = { text = "MIT" }
 authors = [{ name = "aminhzdev" }]
 keywords = ["okf", "mcp", "llm", "retrieval", "knowledge", "documentation"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Topic :: Software Development :: Documentation",
+    "Topic :: Text Processing :: Indexing",
+]
+
+[project.urls]
+Homepage = "https://github.com/aminHZDEV/OpenContextScitool"
+Repository = "https://github.com/aminHZDEV/OpenContextScitool"
+Issues = "https://github.com/aminHZDEV/OpenContextScitool/issues"
 
 # Core install stays tiny on purpose: indexing and search need nothing but a
 # YAML parser. The MCP server's dependency tree (pydantic, starlette, uvicorn,

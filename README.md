@@ -141,6 +141,20 @@ And the search above returns note that a plain-English question surfaces the **c
 
 The bundle deliberately includes two docs that disagree on the token TTL (`token-ttl-api.md` says 15 min, `token-ttl-ops.md` says 24 h) with a `Caveat` naming the conflict so a reader searching the TTL learns *both* claims exist and contradict, which a lexical index can't otherwise express. That, and the honesty rules, are what this tool adds over `grep`.
 
+## Relationship to OKF
+
+This tool speaks [OKF v0.1](https://cloud.google.com/blog/products/data-analytics/how-the-open-knowledge-format-can-improve-data-sharing) — a directory of markdown files with YAML frontmatter, where the only required field is `type`. A bundle here is a valid OKF bundle; it renders on GitHub and reads in any editor.
+
+Where it goes further, and why:
+
+| OKF says | This tool adds |
+|---|---|
+| `type` is open — producer-defined | A **closed 7-type vocabulary** (Concept, Metric, Process, Reference, Decision, System, Caveat) so search weighting and `okf report` have something to reason about. `okf check` enforces it. |
+| Fields: `type, title, description, resource, tags, timestamp` | `aliases` (the no-embeddings retrieval layer), `confidence`, and `conflicts_with` (rival answers to one question). `source` plays OKF's `resource` role, but for provenance/re-ingestion. |
+| Defines the **format** — how knowledge is written | Adds **telemetry** — which knowledge is actually *used*. OKF cleanly separates producer from consumer but says nothing about quality; the usage log and `okf report` answer that. |
+
+So: fully OKF-shaped, with a linter on top and a feedback loop the spec leaves open. A foreign OKF bundle (e.g. Google's data catalogs, with `type: BigQuery Table`) would need a relaxed `check` to pass here — the vocabulary is the one deliberate narrowing.
+
 ## How search works
 
 Keyword (BM25), **not semantic**. A concept is found only if the searcher's words are literally in its indexed text  nothing infers that "churn" and "attrition" are related. That is why `description`, `tags`, and `aliases` are the retrieval layer, and why `ingest-context.md` spends most of its length on how to write them.

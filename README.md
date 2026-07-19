@@ -1,5 +1,7 @@
 # okf-ctx
 
+[![Listed on BundleDex](https://bundledex.net/badge.svg)](https://bundledex.net/bundles/opencontextscitool/)
+
 A context handler for LLMs over an [Open Knowledge Format](https://okf.md) bundle.
 
 Your docs stay as markdown in gitthe source of truth. This builds a **derived, disposable** index over them, serves them to an agent through MCP, and logs every retrieval so you can see which docs get used, which get ignored, and which questions have no answer.
